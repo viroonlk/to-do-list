@@ -5,6 +5,9 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Credentials: true");
 
+// 🌟 พระเอกที่หายไป: สั่งให้ API พ่นข้อมูลเป็น JSON เสมอ
+header('Content-Type: application/json; charset=utf-8');
+
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { exit(http_response_code(200)); }
 
 $host = $_SERVER['DB_HOST'] ?? getenv('DB_HOST') ?? '';

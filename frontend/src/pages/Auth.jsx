@@ -16,39 +16,42 @@ export default function Auth() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: "", text: "" });
-    setIsLoading(true); // ✅ เริ่มการโหลด
+    setIsLoading(true);
 
     try {
       if (isLogin) {
-        // --- เข้าสู่ระบบ ---
         const res = await axios.post(`${API_URL}/login.php`, {
           email: formData.email,
           password: formData.password,
-        }, { withCredentials: true }); // ✅ เพิ่มเพื่อความปลอดภัย
+        }, { withCredentials: true });
 
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-        setMessage({ type: "success", text: "เข้าสู่ระบบสำเร็จ! กำลังพาไปหน้าแรก..." });
-        setTimeout(() => navigate("/dashboard"), 1500);
+        // 🌟 ดักทาง: บังคับแปลงข้อมูลให้เป็น Object แน่นอน
+        const responseData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+
+        // เช็คให้ชัวร์ว่ามีข้อมูล user จริงๆ ค่อยให้ผ่าน
+        if (responseData && responseData.user) {
+          localStorage.setItem("user", JSON.stringify(responseData.user));
+          setMessage({ type: "success", text: "เข้าสู่ระบบสำเร็จ! กำลังพาไปหน้าแรก..." });
+          setTimeout(() => navigate("/dashboard"), 1500);
+        } else {
+          setMessage({ type: "error", text: "ล็อกอินผ่าน แต่โหลดข้อมูลโปรไฟล์ไม่สำเร็จ" });
+        }
 
       } else {
-        // --- สมัครสมาชิก ---
         await axios.post(`${API_URL}/register.php`, formData, { withCredentials: true });
-        
-        // ✅ เพิ่มการจัดการหลังสมัครสมาชิกสำเร็จ
         setMessage({ type: "success", text: "สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบเพื่อใช้งาน" });
-        setIsLogin(true); // สลับไปหน้าล็อกอินอัตโนมัติ
-        setFormData({ username: "", email: "", password: "" }); // ล้างฟอร์ม
+        setIsLogin(true);
+        setFormData({ username: "", email: "", password: "" });
       }
     } catch (error) {
       console.error("Auth Error:", error);
-      // จัดการข้อความ Error ให้ละเอียดขึ้น
-      const errorMsg = error.response?.data?.error || "ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (CORS หรือ URL ผิด)";
+      const errorMsg = error.response?.data?.error || "ไม่สามารถติดต่อเซิร์ฟเวอร์ได้";
       setMessage({ type: "error", text: errorMsg });
     } finally {
-      setIsLoading(false); // ✅ สิ้นสุดการโหลด
+      setIsLoading(false);
     }
   };
 
