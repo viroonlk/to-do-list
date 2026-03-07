@@ -9,7 +9,8 @@ export default function Auth() {
   const navigate = useNavigate();
 
   // URL ของ API หลังบ้าน (แก้ใหตรงกับ Path ใน XAMPP ของคุณ)
-  const API_URL = "https://viroontodo.infinityfreeapp.com//backend/api/auth";
+// ตัดเครื่องหมาย / ที่อยู่หน้าคำว่า backend ออก 1 อันครับ
+const API_URL = "https://viroontodo.infinityfreeapp.com/backend/api/auth";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
