@@ -1,8 +1,8 @@
 <?php
 // ตั้งค่า CORS (Cross-Origin Resource Sharing) อนุญาตให้ React (ที่มักจะรันบนพอร์ต 5173) เรียกใช้งาน API ได้
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Content-Type: application/json; charset=UTF-8");
 
 // จัดการกับ OPTIONS request ที่เบราว์เซอร์ส่งมาก่อน (Preflight)
