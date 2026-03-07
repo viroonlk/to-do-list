@@ -1,24 +1,20 @@
 import { useEffect, useState } from "react";
 
-export default function TaskCard({ task, user, handleUpdateStatus, handleTagUser, handleDeleteTask }) {
+export default function TaskCard({ task, user, handleUpdateStatus, handleTagUser, handleDeleteTask, handleRemoveTag, setEditingTask }) {
   const [countdown, setCountdown] = useState("");
   const [isOverdue, setIsOverdue] = useState(false);
 
-  // ฟังก์ชันคำนวณเวลานับถอยหลัง
   useEffect(() => {
     if (!task.due_date || task.status === 'done') {
-      setCountdown("");
-      return;
+      setCountdown(""); return;
     }
-    
     const calculateTime = () => {
-      const due = new Date(task.due_date).getTime() + (23 * 60 * 60 * 1000) + (59 * 60 * 1000); // นับถึงสิ้นวัน (23:59 น.)
+      const due = new Date(task.due_date).getTime() + (23 * 60 * 60 * 1000) + (59 * 60 * 1000);
       const now = new Date().getTime();
       const diff = due - now;
 
       if (diff < 0) {
-        setIsOverdue(true);
-        setCountdown("หมดเวลาแล้ว!");
+        setIsOverdue(true); setCountdown("หมดเวลาแล้ว!");
       } else {
         setIsOverdue(false);
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -26,9 +22,8 @@ export default function TaskCard({ task, user, handleUpdateStatus, handleTagUser
         setCountdown(`${days > 0 ? `${days} วัน ` : ''}${hours} ชม.`);
       }
     };
-
     calculateTime();
-    const timer = setInterval(calculateTime, 60000); // อัปเดตทุก 1 นาที
+    const timer = setInterval(calculateTime, 60000);
     return () => clearInterval(timer);
   }, [task.due_date, task.status]);
 
@@ -52,7 +47,6 @@ export default function TaskCard({ task, user, handleUpdateStatus, handleTagUser
           {task.start_date && <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 flex justify-between">🚀 เริ่ม: <span className="text-slate-600 dark:text-slate-300">{new Date(task.start_date).toLocaleDateString("th-TH")}</span></p>}
           {task.due_date && <p className="text-xs font-medium text-rose-500 dark:text-rose-400 flex justify-between">⏰ สิ้นสุด: <span className="text-slate-600 dark:text-slate-300">{new Date(task.due_date).toLocaleDateString("th-TH")}</span></p>}
           
-          {/* แสดงเวลานับถอยหลัง */}
           {countdown && (
             <div className={`mt-1 pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs font-bold ${isOverdue ? 'text-red-600 dark:text-red-400 animate-pulse' : 'text-orange-500 dark:text-orange-400'}`}>
               <span>⏳ เวลาที่เหลือ:</span>
@@ -63,12 +57,21 @@ export default function TaskCard({ task, user, handleUpdateStatus, handleTagUser
       </div>
 
       <div className="mt-auto pt-4">
+        {/* 👥 ปรับปรุงการแสดงชื่อคนแท็กให้มีปุ่มกากบาทกดลบได้ */}
         {task.tagged_users && (
-          <div className="mb-4 flex items-start gap-2 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg border border-indigo-100 dark:border-indigo-800">
-            <span className="text-indigo-400">👥</span>
-            <p className="text-xs text-indigo-700 dark:text-indigo-300 font-medium leading-relaxed">
-              ผู้เกี่ยวข้อง: <span className="font-normal">{task.tagged_users}</span>
-            </p>
+          <div className="mb-4 flex flex-col gap-2 bg-indigo-50/50 dark:bg-indigo-900/20 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-800/50">
+            <span className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider flex items-center gap-1">👥 ผู้เกี่ยวข้อง</span>
+            <div className="flex flex-wrap gap-1.5">
+              {task.tagged_users.split(', ').map(username => (
+                <span key={username} className="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 rounded-md text-xs font-medium text-indigo-700 dark:text-indigo-300 shadow-sm">
+                  {username}
+                  {/* ปุ่มลบแท็ก (โชว์เฉพาะเจ้าของงาน) */}
+                  {task.owner_id === user.user_id && (
+                    <button onClick={() => handleRemoveTag(task.task_id, username)} className="text-indigo-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/50 rounded-full w-4 h-4 flex items-center justify-center transition-colors" title={`ลบ ${username} ออก`}>✖</button>
+                  )}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
@@ -83,8 +86,13 @@ export default function TaskCard({ task, user, handleUpdateStatus, handleTagUser
               </button>
             )}
           </div>
+          
+          {/* ปุ่มแก้ไข และ ปุ่มลบ จะรวมกลุ่มกันอยู่ฝั่งขวา */}
           {task.owner_id === user.user_id && (
-            <button onClick={() => handleDeleteTask(task.task_id)} className="opacity-0 group-hover:opacity-100 px-3 py-1.5 text-xs font-semibold text-rose-500 hover:text-white bg-white hover:bg-rose-500 dark:bg-slate-800 dark:hover:bg-rose-600 border border-rose-200 dark:border-rose-900 rounded-lg transition-all shadow-sm">ลบ</button>
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => setEditingTask(task)} className="px-2.5 py-1.5 text-xs font-semibold text-amber-500 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 rounded-lg shadow-sm transition-colors">✏️ แก้ไข</button>
+              <button onClick={() => handleDeleteTask(task.task_id)} className="px-2.5 py-1.5 text-xs font-semibold text-rose-500 hover:text-white bg-white hover:bg-rose-500 dark:bg-slate-800 dark:hover:bg-rose-600 border border-rose-200 dark:border-rose-900 rounded-lg shadow-sm transition-colors">ลบ</button>
+            </div>
           )}
         </div>
       </div>
