@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { exit(http_response_code(200)); }
 
 // ดึงค่าจาก Environment Variables ของ Render
 $host = getenv('gateway01.ap-southeast-1.prod.aws.tidbcloud.com');
-$db_name = getenv('DB_NAME');
+$db_name = getenv('to_do_list');
 $username = getenv('FibA8HWnkaUm3zD.root');
 $password = getenv('5XnL8dAvTgMRGcdu');
 $port = getenv('4000') ?: "4000";
