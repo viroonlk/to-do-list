@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // ตั้งค่าการเชื่อมต่อฐานข้อมูล
 $host = "sql103.infinityfree.com";
-$db_name = "to_do_list"; // ชื่อ Database ที่เราตกลงกันไว้
+$db_name = "if0_41329480_to_do_list"; // ชื่อ Database ที่เราตกลงกันไว้
 $username = "if0_41329480";      // ใส่ username ของ MySQL คุณ (ค่าเริ่มต้น XAMPP คือ root)
 $password = "lJBLiQva0aKbne";          // ใส่รหัสผ่านของ MySQL คุณ (ค่าเริ่มต้น XAMPP คือ รหัสว่าง)
 
