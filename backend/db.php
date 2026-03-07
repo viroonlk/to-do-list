@@ -17,8 +17,8 @@ $port = $_SERVER['DB_PORT'] ?? getenv('DB_PORT') ?? "4000";
 if (empty($host)) {
     $host = "gateway01.ap-southeast-1.prod.aws.tidbcloud.com";
     $db_name = "to_do_list";
-    $username = "4H5rYsXj9o3CLjq.root"; 
-    $password = "YM29R1EY42H3l4Qn";     
+    $username = "4H5rYsXj9o3CLjq.root"; // ตัวใหม่
+    $password = "L3XZ39WWIHBVVlGZ";     // ตัวใหม่
     $port = "4000";
 }
 
