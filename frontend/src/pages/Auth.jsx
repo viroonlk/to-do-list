@@ -9,7 +9,7 @@ export default function Auth() {
   const navigate = useNavigate();
 
   // ✅ แก้ไข: ให้ชี้ไปที่โฟลเดอร์ auth เท่านั้น และเช็คชื่อโดเมนให้ถูกต้อง
-  const API_URL = "https://to-do-list-kz8a.onrender.com/api/auth/login.php";
+  const API_URL = "https://to-do-list-kz8a.onrender.com/api/auth";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
