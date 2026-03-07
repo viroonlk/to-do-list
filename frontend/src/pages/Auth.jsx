@@ -20,25 +20,18 @@ export default function Auth() {
     setMessage({ type: "", text: "" });
 
     try {
-      if (isLogin) {
-        // --- ยิง API เข้าสู่ระบบ ---
-        // ✅ แก้ไข: Path จะกลายเป็น .../api/auth/login.php อย่างถูกต้อง
-        const res = await axios.post(`${API_URL}/login.php`, {
-          email: formData.email,
-          password: formData.password,
-        });
+if (isLogin) {
+  const res = await axios.post(`${API_URL}/login.php`, { // ✅ ผลลัพธ์จะเป็น .../auth/login.php
+    email: formData.email,
+    password: formData.password,
+  });
         
         localStorage.setItem("user", JSON.stringify(res.data.user));
         setMessage({ type: "success", text: "เข้าสู่ระบบสำเร็จ! กำลังพาไปหน้าแรก..." });
         setTimeout(() => navigate("/dashboard"), 1000);
 
       } else {
-        // --- ยิง API สมัครสมาชิก ---
-        // ✅ แก้ไข: Path จะกลายเป็น .../api/auth/register.php
-        await axios.post(`${API_URL}/register.php`, formData);
-        setMessage({ type: "success", text: "สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ" });
-        setIsLogin(true);
-        setFormData({ username: "", email: "", password: "" });
+  await axios.post(`${API_URL}/register.php`, formData);
       }
     } catch (error) {
       console.error("Auth Error:", error);
