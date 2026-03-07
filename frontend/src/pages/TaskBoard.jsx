@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// 📦 เรียกใช้ Component ย่อย
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import DashboardTab from "../components/DashboardTab";
@@ -13,7 +12,7 @@ import EditTaskModal from "../components/EditTaskModal";
 export default function TaskBoard() {
   const [tasks, setTasks] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // ✅ เพิ่มสถานะการโหลด
+  const [isLoading, setIsLoading] = useState(true);
   const [newTask, setNewTask] = useState({ title: "", description: "", start_date: "", due_date: "", category_id: "" });
   const [newCategory, setNewCategory] = useState({ name: "", color_code: "#6366F1" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,9 +23,24 @@ export default function TaskBoard() {
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(() => localStorage.getItem("notifyEnabled") !== "false");
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
 
-  // ✅ ตั้งค่า URL ของ Render (ถูกต้องตาม Root Directory: backend)
+  // 🌟 จุดที่แก้: สร้างฟังก์ชันดึงข้อมูล User แบบปลอดภัย ไม่ให้แครชหน้าขาว
+  const getSafeUser = () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      // เช็คว่ามีค่า และต้องไม่ใช่คำว่า "undefined"
+      if (storedUser && storedUser !== "undefined") {
+        return JSON.parse(storedUser);
+      }
+      return null;
+    } catch (error) {
+      localStorage.removeItem("user"); // ลบขยะทิ้งถ้าพัง
+      return null;
+    }
+  };
+  
+  const user = getSafeUser();
+
   const API_TASKS = "https://to-do-list-kz8a.onrender.com/api/tasks";
   const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
 
@@ -41,20 +55,24 @@ export default function TaskBoard() {
   }, [isDarkMode]);
 
   useEffect(() => {
-    if (!user) { navigate("/"); return; }
-    // ดึงข้อมูลพร้อมกันเพื่อลดเวลาโหลด
+    // ถ้ายูสเซอร์ไม่มี หรือข้อมูลพัง ให้เด้งกลับไปหน้าล็อกอินอย่างปลอดภัย
+    if (!user) { 
+      navigate("/"); 
+      return; 
+    }
     const initData = async () => {
       setIsLoading(true);
       await Promise.all([fetchTasks(), fetchCategories()]);
       setIsLoading(false);
     };
     initData();
-  }, []);
+  }, [navigate]); // ✅ ใส่ dependencies ให้ครบตามหลัก React
 
   const fetchTasks = async () => {
     try {
       const res = await axios.get(`${API_TASKS}/get_tasks.php?user_id=${user.user_id}`);
-      setTasks(res.data);
+      // 🌟 ดักทาง: เช็คว่าหลังบ้านส่ง Array มาจริงๆ ไม่ใช่ข้อความ Error
+      setTasks(Array.isArray(res.data) ? res.data : []);
     } catch (error) { 
       console.error("Fetch Tasks Error:", error);
     }
@@ -63,7 +81,7 @@ export default function TaskBoard() {
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API_CATEGORIES}/get_categories.php?user_id=${user.user_id}`);
-      setCategories(res.data);
+      setCategories(Array.isArray(res.data) ? res.data : []);
     } catch (error) { 
       console.error("Fetch Categories Error:", error);
     }
@@ -89,11 +107,9 @@ export default function TaskBoard() {
     } catch (error) { alert("เพิ่มงานไม่สำเร็จ"); }
   };
 
-  // ✅ ฟังก์ชันลบหมวดหมู่ (เพิ่มเพื่อรองรับหน้า Settings)
   const handleDeleteCategory = async (category_id) => {
     if (!window.confirm("การลบหมวดหมู่จะทำให้งานในหมวดหมู่นี้ไม่มีหมวดหมู่ ยืนยันไหม?")) return;
     try {
-      // ตรวจสอบว่า API ฝั่งหลังบ้านรองรับการลบแล้ว
       await axios.delete(`${API_CATEGORIES}/delete.php`, { data: { category_id, user_id: user.user_id } });
       fetchCategories();
       fetchTasks();
@@ -146,20 +162,23 @@ export default function TaskBoard() {
   };
 
   // --- ส่วนคำนวณ Task ---
-  const urgentTasks = tasks.filter(t => {
+  // เช็คให้ชัวร์ว่า tasks เป็น Array ก่อนนำไปใช้งาน
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+
+  const urgentTasks = safeTasks.filter(t => {
     if (t.status === 'done' || !t.due_date) return false;
     const due = new Date(t.due_date).getTime() + (23 * 60 * 60 * 1000);
     const now = new Date().getTime();
     return (due - now) < (3 * 24 * 60 * 60 * 1000);
   });
 
-  const totalTasks = tasks.length;
-  const doneTasks = tasks.filter(t => t.status === 'done').length;
-  const inProgressTasks = tasks.filter(t => t.status === 'in_progress').length;
-  const todoTasks = tasks.filter(t => t.status === 'todo').length;
+  const totalTasks = safeTasks.length;
+  const doneTasks = safeTasks.filter(t => t.status === 'done').length;
+  const inProgressTasks = safeTasks.filter(t => t.status === 'in_progress').length;
+  const todoTasks = safeTasks.filter(t => t.status === 'todo').length;
 
-  const filteredTasks = tasks.filter(task => 
-    task.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredTasks = safeTasks.filter(task => 
+    task.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (task.category_name && task.category_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -171,7 +190,6 @@ export default function TaskBoard() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <Navbar user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} urgentTasks={urgentTasks} isNotificationEnabled={isNotificationEnabled} />
 
-        {/* ✅ แสดง UI ขณะโหลดข้อมูล */}
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
@@ -198,7 +216,7 @@ export default function TaskBoard() {
                   isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} 
                   isNotificationEnabled={isNotificationEnabled} setIsNotificationEnabled={setIsNotificationEnabled} 
                   categories={categories}
-                  onDeleteCategory={handleDeleteCategory} // ✅ ส่งฟังก์ชันลบไปให้ SettingsTab
+                  onDeleteCategory={handleDeleteCategory}
                 />
               )}
 
