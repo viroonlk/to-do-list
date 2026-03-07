@@ -24,8 +24,8 @@ export default function TaskBoard() {
 
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
-  const API_TASKS = "https://viroontodo.infinityfreeapp.com//backend/api/tasks";
-  const API_CATEGORIES = "https://viroontodo.infinityfreeapp.com//backend/api/categories";
+  const API_TASKS = "https://viroontodo.infinityfreeapp.com/backend/api/tasks";
+  const API_CATEGORIES = "https://viroontodo.infinityfreeapp.com/backend/api/categories";
 
   useEffect(() => {
     localStorage.setItem("notifyEnabled", isNotificationEnabled);
