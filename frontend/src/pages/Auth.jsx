@@ -20,18 +20,20 @@ export default function Auth() {
     setMessage({ type: "", text: "" });
 
     try {
-if (isLogin) {
-  const res = await axios.post(`${API_URL}/login.php`, { // ✅ ผลลัพธ์จะเป็น .../auth/login.php
-    email: formData.email,
-    password: formData.password,
-  });
-        
+      if (isLogin) {
+        // ✅ ผลลัพธ์จะเป็น .../api/auth/login.php เป๊ะๆ
+        const res = await axios.post(`${API_URL}/login.php`, {
+          email: formData.email,
+          password: formData.password,
+        });
+
         localStorage.setItem("user", JSON.stringify(res.data.user));
         setMessage({ type: "success", text: "เข้าสู่ระบบสำเร็จ! กำลังพาไปหน้าแรก..." });
         setTimeout(() => navigate("/dashboard"), 1000);
 
       } else {
-  await axios.post(`${API_URL}/register.php`, formData);
+        // ✅ ผลลัพธ์จะเป็น .../api/auth/register.php
+        await axios.post(`${API_URL}/register.php`, formData);
       }
     } catch (error) {
       console.error("Auth Error:", error);
@@ -59,18 +61,18 @@ if (isLogin) {
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-400">ชื่อผู้ใช้</label>
-              <input type="text" name="username" value={formData.username} onChange={handleChange} required={!isLogin} className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 outline-none" placeholder="ตั้งชื่อผู้ใช้งาน"/>
+              <input type="text" name="username" value={formData.username} onChange={handleChange} required={!isLogin} className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 outline-none" placeholder="ตั้งชื่อผู้ใช้งาน" />
             </div>
           )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-400">อีเมล</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 outline-none" placeholder="example@email.com"/>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 outline-none" placeholder="example@email.com" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-400">รหัสผ่าน</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 outline-none" placeholder="••••••••"/>
+            <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 outline-none" placeholder="••••••••" />
           </div>
 
           <button type="submit" className="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-md shadow-blue-200 dark:shadow-none transition">
