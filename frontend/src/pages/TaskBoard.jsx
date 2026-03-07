@@ -15,7 +15,18 @@ export default function TaskBoard() {
   const [activeTab, setActiveTab] = useState("dashboard"); 
   
   // 🌙 State สำหรับ Dark Mode (จำค่าไว้ในเครื่อง)
+  // 🌙 State สำหรับ Dark Mode
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
+  
+  // 🔔 State สำหรับเปิด-ปิดแจ้งเตือน (ค่าเริ่มต้นคือ true)
+  const [isNotificationEnabled, setIsNotificationEnabled] = useState(() => {
+    return localStorage.getItem("notifyEnabled") !== "false";
+  });
+
+  // Effect สำหรับเซฟค่าการแจ้งเตือนลงเครื่อง
+  useEffect(() => {
+    localStorage.setItem("notifyEnabled", isNotificationEnabled);
+  }, [isNotificationEnabled]);
 
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
@@ -122,7 +133,8 @@ export default function TaskBoard() {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         {/* ส่ง urgentTasks ไปให้ Navbar */}
-        <Navbar user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} urgentTasks={urgentTasks} />
+        {/* ส่ง isNotificationEnabled ไปให้ Navbar ด้วย */}
+<Navbar user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} urgentTasks={urgentTasks} isNotificationEnabled={isNotificationEnabled} />
 
         <div className="flex-1 overflow-y-auto p-8 scroll-smooth">
           <div className="max-w-7xl mx-auto space-y-8 pb-12">
@@ -260,7 +272,7 @@ export default function TaskBoard() {
               </div>
             )}
 
-            {/* หน้าตั้งค่า (Settings UI แบบจัดเต็ม) */}
+{/* หน้าตั้งค่า (Settings UI) */}
             {activeTab === 'settings' && (
               <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
                 
@@ -282,7 +294,7 @@ export default function TaskBoard() {
                   </div>
                 </div>
 
-                {/* 2. การตั้งค่าระบบ */}
+                {/* 2. การตั้งค่าระบบ (รวม Dark Mode และ แจ้งเตือน ไว้ในกล่องนี้) */}
                 <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
                   <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-3">
                     <span className="p-2 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-xl">⚙️</span> 
@@ -301,14 +313,17 @@ export default function TaskBoard() {
                       </button>
                     </div>
 
-                    {/* Notification Toggle (UI จำลอง) */}
+                    {/* Notification Toggle (อันที่กดได้จริง) */}
                     <div className="flex items-center justify-between p-4 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                       <div>
                         <h4 className="font-bold text-slate-700 dark:text-slate-200">การแจ้งเตือนงานด่วน</h4>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">แสดงจุดสีแดงที่กระดิ่งเมื่องานใกล้ถึงกำหนดส่ง (3 วัน)</p>
                       </div>
-                      <button className="w-14 h-7 rounded-full relative transition-colors duration-300 focus:outline-none bg-emerald-500 cursor-default">
-                        <div className="w-5 h-5 bg-white rounded-full absolute top-1 translate-x-8 shadow-sm"></div>
+                      <button 
+                        onClick={() => setIsNotificationEnabled(!isNotificationEnabled)}
+                        className={`w-14 h-7 rounded-full relative transition-colors duration-300 focus:outline-none ${isNotificationEnabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+                      >
+                        <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-transform duration-300 shadow-sm ${isNotificationEnabled ? 'translate-x-8' : 'translate-x-1'}`}></div>
                       </button>
                     </div>
 
@@ -326,7 +341,6 @@ export default function TaskBoard() {
                       <div key={cat.category_id} className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color_code }}></div>
                         <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{cat.name}</span>
-                        {/* ถ้าต้องการให้ลบได้จริง ต้องไปทำ API delete_category.php เพิ่ม แต่นี่ใส่ UI ไว้ก่อน */}
                         <button className="ml-2 text-slate-400 hover:text-rose-500 transition-colors" title="ลบหมวดหมู่">✖</button>
                       </div>
                     )) : (

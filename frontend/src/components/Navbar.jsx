@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-export default function Navbar({ user, searchQuery, setSearchQuery, urgentTasks }) {
+// รับ isNotificationEnabled เข้ามาใช้งาน
+export default function Navbar({ user, searchQuery, setSearchQuery, urgentTasks, isNotificationEnabled }) {
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
@@ -13,25 +14,27 @@ export default function Navbar({ user, searchQuery, setSearchQuery, urgentTasks 
       </div>
       
       <div className="flex items-center gap-4 ml-4 relative">
-        {/* ปุ่มกระดิ่งแจ้งเตือน */}
         <button 
           onClick={() => setShowNotifications(!showNotifications)}
-          className="relative w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          className="relative w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none"
         >
           🔔
-          {urgentTasks.length > 0 && (
+          {/* ซ่อนจุดแดงถ้าปิดการแจ้งเตือน */}
+          {isNotificationEnabled && urgentTasks.length > 0 && (
             <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-rose-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse"></span>
           )}
         </button>
 
-        {/* Dropdown แจ้งเตือน */}
         {showNotifications && (
           <div className="absolute top-12 right-0 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden z-50">
             <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-200">
-              การแจ้งเตือนงานด่วน ({urgentTasks.length})
+              การแจ้งเตือนงานด่วน
             </div>
             <div className="max-h-64 overflow-y-auto p-2">
-              {urgentTasks.length === 0 ? (
+              {/* เช็คเงื่อนไขว่าผู้ใช้เปิดหรือปิดแจ้งเตือนอยู่ */}
+              {!isNotificationEnabled ? (
+                <p className="text-sm text-center text-slate-400 p-4">🔕 การแจ้งเตือนถูกปิดใช้งาน</p>
+              ) : urgentTasks.length === 0 ? (
                 <p className="text-sm text-center text-slate-400 p-4">ไม่มีงานเร่งด่วนในขณะนี้ 🎉</p>
               ) : (
                 urgentTasks.map(task => (
