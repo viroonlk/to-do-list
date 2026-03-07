@@ -12,10 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // ตั้งค่าการเชื่อมต่อฐานข้อมูล
-$host = "localhost";
+$host = "sql103.infinityfree.com";
 $db_name = "to_do_list"; // ชื่อ Database ที่เราตกลงกันไว้
-$username = "root";      // ใส่ username ของ MySQL คุณ (ค่าเริ่มต้น XAMPP คือ root)
-$password = "";          // ใส่รหัสผ่านของ MySQL คุณ (ค่าเริ่มต้น XAMPP คือ รหัสว่าง)
+$username = "if0_41329480";      // ใส่ username ของ MySQL คุณ (ค่าเริ่มต้น XAMPP คือ root)
+$password = "lJBLiQva0aKbne";          // ใส่รหัสผ่านของ MySQL คุณ (ค่าเริ่มต้น XAMPP คือ รหัสว่าง)
 
 try {
     // ใช้ PDO เพื่อความปลอดภัยจากการถูก SQL Injection
