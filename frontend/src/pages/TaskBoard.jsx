@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// 📦 เรียกใช้ Component ย่อยที่เราแยกส่วนไว้
+// 📦 เรียกใช้ Component ย่อย
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import DashboardTab from "../components/DashboardTab";
@@ -13,6 +13,7 @@ import EditTaskModal from "../components/EditTaskModal";
 export default function TaskBoard() {
   const [tasks, setTasks] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // ✅ เพิ่มสถานะการโหลด
   const [newTask, setNewTask] = useState({ title: "", description: "", start_date: "", due_date: "", category_id: "" });
   const [newCategory, setNewCategory] = useState({ name: "", color_code: "#6366F1" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,8 +25,10 @@ export default function TaskBoard() {
 
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
-const API_TASKS = "https://to-do-list-kz8a.onrender.com/api/tasks";
-const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
+
+  // ✅ ตั้งค่า URL ของ Render (ถูกต้องตาม Root Directory: backend)
+  const API_TASKS = "https://to-do-list-kz8a.onrender.com/api/tasks";
+  const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
 
   useEffect(() => {
     localStorage.setItem("notifyEnabled", isNotificationEnabled);
@@ -39,22 +42,31 @@ const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
 
   useEffect(() => {
     if (!user) { navigate("/"); return; }
-    fetchTasks();
-    fetchCategories();
+    // ดึงข้อมูลพร้อมกันเพื่อลดเวลาโหลด
+    const initData = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchTasks(), fetchCategories()]);
+      setIsLoading(false);
+    };
+    initData();
   }, []);
 
   const fetchTasks = async () => {
     try {
       const res = await axios.get(`${API_TASKS}/get_tasks.php?user_id=${user.user_id}`);
       setTasks(res.data);
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error("Fetch Tasks Error:", error);
+    }
   };
 
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API_CATEGORIES}/get_categories.php?user_id=${user.user_id}`);
       setCategories(res.data);
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error("Fetch Categories Error:", error);
+    }
   };
 
   const handleAddCategory = async (e) => {
@@ -64,7 +76,7 @@ const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
       await axios.post(`${API_CATEGORIES}/create.php`, { user_id: user.user_id, ...newCategory });
       setNewCategory({ name: "", color_code: "#6366F1" });
       fetchCategories();
-    } catch (error) { console.error(error); }
+    } catch (error) { alert("เพิ่มหมวดหมู่ไม่สำเร็จ"); }
   };
 
   const handleAddTask = async (e) => {
@@ -74,7 +86,18 @@ const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
       await axios.post(`${API_TASKS}/create.php`, { owner_id: user.user_id, ...newTask, category_id: newTask.category_id || null });
       setNewTask({ title: "", description: "", start_date: "", due_date: "", category_id: "" });
       fetchTasks();
-    } catch (error) { console.error(error); }
+    } catch (error) { alert("เพิ่มงานไม่สำเร็จ"); }
+  };
+
+  // ✅ ฟังก์ชันลบหมวดหมู่ (เพิ่มเพื่อรองรับหน้า Settings)
+  const handleDeleteCategory = async (category_id) => {
+    if (!window.confirm("การลบหมวดหมู่จะทำให้งานในหมวดหมู่นี้ไม่มีหมวดหมู่ ยืนยันไหม?")) return;
+    try {
+      // ตรวจสอบว่า API ฝั่งหลังบ้านรองรับการลบแล้ว
+      await axios.delete(`${API_CATEGORIES}/delete.php`, { data: { category_id, user_id: user.user_id } });
+      fetchCategories();
+      fetchTasks();
+    } catch (error) { alert("ไม่สามารถลบหมวดหมู่ได้"); }
   };
 
   const handleUpdateStatus = async (task_id, currentStatus) => {
@@ -84,7 +107,7 @@ const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
     try {
       await axios.put(`${API_TASKS}/update.php`, { task_id, owner_id: user.user_id, status: newStatus, title: tasks.find(t => t.task_id === task_id).title });
       fetchTasks();
-    } catch (error) { console.error(error); }
+    } catch (error) { alert("อัปเดตสถานะไม่สำเร็จ"); }
   };
 
   const handleDeleteTask = async (task_id) => {
@@ -92,7 +115,7 @@ const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
     try {
       await axios.delete(`${API_TASKS}/delete.php`, { data: { task_id, owner_id: user.user_id } });
       fetchTasks();
-    } catch (error) { console.error(error); }
+    } catch (error) { alert("ลบงานไม่สำเร็จ"); }
   };
 
   const handleTagUser = async (task_id) => {
@@ -102,7 +125,7 @@ const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
       await axios.post(`${API_TASKS}/tag_user.php`, { task_id, owner_id: user.user_id, username: usernameToTag.trim() });
       alert(`แท็ก ${usernameToTag} สำเร็จแล้ว!`);
       fetchTasks(); 
-    } catch (error) { alert(error.response?.data?.error || "เกิดข้อผิดพลาด"); }
+    } catch (error) { alert(error.response?.data?.error || "ไม่พบชื่อผู้ใช้งานนี้"); }
   };
 
   const handleEditSubmit = async (e) => {
@@ -122,6 +145,7 @@ const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
     } catch (error) { alert("เกิดข้อผิดพลาดในการลบแท็ก"); }
   };
 
+  // --- ส่วนคำนวณ Task ---
   const urgentTasks = tasks.filter(t => {
     if (t.status === 'done' || !t.due_date) return false;
     const due = new Date(t.due_date).getTime() + (23 * 60 * 60 * 1000);
@@ -147,32 +171,40 @@ const API_CATEGORIES = "https://to-do-list-kz8a.onrender.com/api/categories";
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <Navbar user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} urgentTasks={urgentTasks} isNotificationEnabled={isNotificationEnabled} />
 
-        <div className="flex-1 overflow-y-auto p-8 scroll-smooth">
-          <div className="max-w-7xl mx-auto space-y-8 pb-12">
-            
-            {activeTab === 'dashboard' && (
-              <DashboardTab 
-                totalTasks={totalTasks} todoTasks={todoTasks} inProgressTasks={inProgressTasks} doneTasks={doneTasks}
-                newCategory={newCategory} setNewCategory={setNewCategory} handleAddCategory={handleAddCategory}
-                newTask={newTask} setNewTask={setNewTask} categories={categories} handleAddTask={handleAddTask}
-                filteredTasks={filteredTasks} user={user} handleUpdateStatus={handleUpdateStatus} handleTagUser={handleTagUser}
-                handleDeleteTask={handleDeleteTask} handleRemoveTag={handleRemoveTag} setEditingTask={setEditingTask}
-              />
-            )}
-
-            {activeTab === 'projects' && <ProjectsTab filteredTasks={filteredTasks} />}
-
-            {activeTab === 'settings' && (
-              <SettingsTab 
-                user={user} 
-                isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} 
-                isNotificationEnabled={isNotificationEnabled} setIsNotificationEnabled={setIsNotificationEnabled} 
-                categories={categories}
-              />
-            )}
-
+        {/* ✅ แสดง UI ขณะโหลดข้อมูล */}
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
           </div>
-        </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-8 scroll-smooth">
+            <div className="max-w-7xl mx-auto space-y-8 pb-12">
+              
+              {activeTab === 'dashboard' && (
+                <DashboardTab 
+                  totalTasks={totalTasks} todoTasks={todoTasks} inProgressTasks={inProgressTasks} doneTasks={doneTasks}
+                  newCategory={newCategory} setNewCategory={setNewCategory} handleAddCategory={handleAddCategory}
+                  newTask={newTask} setNewTask={setNewTask} categories={categories} handleAddTask={handleAddTask}
+                  filteredTasks={filteredTasks} user={user} handleUpdateStatus={handleUpdateStatus} handleTagUser={handleTagUser}
+                  handleDeleteTask={handleDeleteTask} handleRemoveTag={handleRemoveTag} setEditingTask={setEditingTask}
+                />
+              )}
+
+              {activeTab === 'projects' && <ProjectsTab filteredTasks={filteredTasks} />}
+
+              {activeTab === 'settings' && (
+                <SettingsTab 
+                  user={user} 
+                  isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} 
+                  isNotificationEnabled={isNotificationEnabled} setIsNotificationEnabled={setIsNotificationEnabled} 
+                  categories={categories}
+                  onDeleteCategory={handleDeleteCategory} // ✅ ส่งฟังก์ชันลบไปให้ SettingsTab
+                />
+              )}
+
+            </div>
+          </div>
+        )}
         
         <EditTaskModal editingTask={editingTask} setEditingTask={setEditingTask} handleEditSubmit={handleEditSubmit} categories={categories} />
 

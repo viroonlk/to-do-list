@@ -6,9 +6,10 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ username: "", email: "", password: "" });
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [isLoading, setIsLoading] = useState(false); // ✅ เพิ่มสถานะการโหลด
   const navigate = useNavigate();
 
-  // ✅ แก้ไข: ให้ชี้ไปที่โฟลเดอร์ auth เท่านั้น และเช็คชื่อโดเมนให้ถูกต้อง
+  // URL ของ Render ที่คุณตั้ง Root Directory เป็น backend เรียบร้อยแล้ว
   const API_URL = "https://to-do-list-kz8a.onrender.com/api/auth";
 
   const handleChange = (e) => {
@@ -18,41 +19,52 @@ export default function Auth() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: "", text: "" });
+    setIsLoading(true); // ✅ เริ่มการโหลด
 
     try {
       if (isLogin) {
-        // ✅ ผลลัพธ์จะเป็น .../api/auth/login.php เป๊ะๆ
+        // --- เข้าสู่ระบบ ---
         const res = await axios.post(`${API_URL}/login.php`, {
           email: formData.email,
           password: formData.password,
-        });
+        }, { withCredentials: true }); // ✅ เพิ่มเพื่อความปลอดภัย
 
         localStorage.setItem("user", JSON.stringify(res.data.user));
         setMessage({ type: "success", text: "เข้าสู่ระบบสำเร็จ! กำลังพาไปหน้าแรก..." });
-        setTimeout(() => navigate("/dashboard"), 1000);
+        setTimeout(() => navigate("/dashboard"), 1500);
 
       } else {
-        // ✅ ผลลัพธ์จะเป็น .../api/auth/register.php
-        await axios.post(`${API_URL}/register.php`, formData);
+        // --- สมัครสมาชิก ---
+        await axios.post(`${API_URL}/register.php`, formData, { withCredentials: true });
+        
+        // ✅ เพิ่มการจัดการหลังสมัครสมาชิกสำเร็จ
+        setMessage({ type: "success", text: "สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบเพื่อใช้งาน" });
+        setIsLogin(true); // สลับไปหน้าล็อกอินอัตโนมัติ
+        setFormData({ username: "", email: "", password: "" }); // ล้างฟอร์ม
       }
     } catch (error) {
       console.error("Auth Error:", error);
-      setMessage({
-        type: "error",
-        text: error.response?.data?.error || "ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (CORS หรือ URL ผิด)",
-      });
+      // จัดการข้อความ Error ให้ละเอียดขึ้น
+      const errorMsg = error.response?.data?.error || "ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (CORS หรือ URL ผิด)";
+      setMessage({ type: "error", text: errorMsg });
+    } finally {
+      setIsLoading(false); // ✅ สิ้นสุดการโหลด
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-slate-950">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-slate-900 rounded-xl shadow-lg border dark:border-slate-800">
-        <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white">
-          {isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-slate-950 p-4">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border dark:border-slate-800 transition-all">
+        <h2 className="text-3xl font-extrabold text-center text-gray-800 dark:text-white">
+          {isLogin ? "ยินดีต้อนรับกลับมา" : "สร้างบัญชีใหม่"}
         </h2>
 
         {message.text && (
-          <div className={`p-3 text-sm rounded-lg font-medium ${message.type === "success" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>
+          <div className={`p-4 text-sm rounded-lg font-medium animate-pulse ${
+            message.type === "success" 
+              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+          }`}>
             {message.text}
           </div>
         )}
@@ -61,28 +73,41 @@ export default function Auth() {
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-400">ชื่อผู้ใช้</label>
-              <input type="text" name="username" value={formData.username} onChange={handleChange} required={!isLogin} className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 outline-none" placeholder="ตั้งชื่อผู้ใช้งาน" />
+              <input type="text" name="username" value={formData.username} onChange={handleChange} required={!isLogin} 
+                className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="Viroon_ITDS" />
             </div>
           )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-400">อีเมล</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 outline-none" placeholder="example@email.com" />
+            <input type="email" name="email" value={formData.email} onChange={handleChange} required 
+              className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="example@email.com" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-400">รหัสผ่าน</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 outline-none" placeholder="••••••••" />
+            <input type="password" name="password" value={formData.password} onChange={handleChange} required 
+              className="w-full px-4 py-2 mt-1 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="••••••••" />
           </div>
 
-          <button type="submit" className="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-md shadow-blue-200 dark:shadow-none transition">
-            {isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
+          <button 
+            type="submit" 
+            disabled={isLoading} // ✅ ป้องกันการกดซ้ำขณะโหลด
+            className={`w-full px-4 py-2 font-bold text-white rounded-lg shadow-md transition-all ${
+              isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+            }`}
+          >
+            {isLoading ? "กำลังประมวลผล..." : (isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก")}
           </button>
         </form>
 
         <p className="text-sm text-center text-gray-600 dark:text-slate-400">
           {isLogin ? "ยังไม่มีบัญชีใช่ไหม? " : "มีบัญชีอยู่แล้ว? "}
-          <button onClick={() => { setIsLogin(!isLogin); setMessage({ type: "", text: "" }); }} className="font-medium text-blue-600 hover:underline">
+          <button 
+            type="button"
+            onClick={() => { setIsLogin(!isLogin); setMessage({ type: "", text: "" }); }} 
+            className="font-semibold text-blue-600 hover:text-blue-500 hover:underline transition-all"
+          >
             {isLogin ? "สมัครสมาชิกที่นี่" : "เข้าสู่ระบบเลย"}
           </button>
         </p>
